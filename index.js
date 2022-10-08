@@ -1,19 +1,19 @@
-import express from "express"
-import bodyParser from "body-parser"
-import cors from "cors"
-import helmet from "helmet"
-import morgan from "morgan"
-import fetch from "cross-fetch"
-import puppeteer from "puppeteer-core"
-import chromium from "chrome-aws-lambda"
-import { PrismaClient } from "@prisma/client"
+const express = require("express")
+const bodyParser = require("body-parser")
+const cors = require("cors")
+const helmet = require("helmet")
+const morgan = require("morgan")
+const fetch = require("cross-fetch")
+const puppeteer = require("puppeteer-core")
+const chromium = require("chrome-aws-lambda")
+const { PrismaClient } = require("@prisma/client")
 const Telegram = require("telegram-notify")
-import * as dotenv from "dotenv"
-dotenv.config()
+require("dotenv").config()
 
-import { server } from "./config"
+const dev = process.env.NODE_ENV === "development"
+const server = dev ? "http://localhost:3001" : "https://envoy-apis.herokuapp.com"
 
-let notify = new Telegram({ token: process.env.BOT_TOKEN, chatId: process.env.CHAT_ID })
+const notify = new Telegram({ token: process.env.BOT_TOKEN, chatId: process.env.CHAT_ID })
 const prisma = new PrismaClient()
 const app = express()
 

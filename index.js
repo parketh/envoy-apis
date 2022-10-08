@@ -10,8 +10,7 @@ const { PrismaClient } = require("@prisma/client")
 const Telegram = require("telegram-notify")
 require("dotenv").config()
 
-const dev = process.env.NODE_ENV === "development"
-const server = dev ? "http://localhost:3001" : "https://envoy-apis.herokuapp.com"
+const server = process.env.NODE_ENV === "development" ? "http://localhost:3001" : "https://envoy-apis.herokuapp.com"
 
 const notify = new Telegram({ token: process.env.BOT_TOKEN, chatId: process.env.CHAT_ID })
 const prisma = new PrismaClient()
@@ -30,7 +29,7 @@ app.get("/api/proposals/fetch/makerdao", async (req, res) => {
     const scrape = async (slug) => {
         console.log(`/api/proposals/fetch/makerdao:  Scraping ${slug} data`)
         console.log(`/api/proposals/fetch/makerdao:  Launching browser`)
-        const browser = await puppeteer.launch({
+        const browser = await chromium.puppeteer.launch({
             args: [
                 ...chromium.args,
                 "--hide-scrollbars",

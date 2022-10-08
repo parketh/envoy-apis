@@ -71,7 +71,7 @@ app.get("/api/proposals/fetch/makerdao", async (req, res) => {
                           dateExpiry: p.endDate,
                           voteUrl: `https://vote.makerdao.com/${slug}/${p.slug}`,
                           forumUrl: p.discussionLink,
-                          status: Status.Unassigned,
+                          status: "Unassigned",
                       }
                   })
                 : entries.map((p) => {
@@ -89,7 +89,7 @@ app.get("/api/proposals/fetch/makerdao", async (req, res) => {
                               .toLowerCase()
                               .replace(/ /g, "-")}${"#proposal-detail"}`,
                           forumUrl: "",
-                          status: Status.Unassigned,
+                          status: "Unassigned",
                       }
                   })
         return data

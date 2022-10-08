@@ -7,45 +7,15 @@ import fetch from "cross-fetch"
 import puppeteer from "puppeteer-core"
 import chromium from "chrome-aws-lambda"
 import { PrismaClient } from "@prisma/client"
-import { Prisma, Proposal } from "@prisma/client"
 const Telegram = require("telegram-notify")
 import * as dotenv from "dotenv"
 dotenv.config()
 
-import { server } from "../config"
+import { server } from "./config"
 
 let notify = new Telegram({ token: process.env.BOT_TOKEN, chatId: process.env.CHAT_ID })
 const prisma = new PrismaClient()
 const app = express()
-
-enum ProposalType {
-    poll,
-    executive,
-}
-
-enum Status {
-    Unassigned,
-    Assigned,
-    Submitted,
-}
-
-interface IProposalInfo {
-    title: string
-    protocol: {
-        connect: {
-            name: string
-        }
-    }
-    type: string
-    dateAdded: Date
-    dateExpiry: Date
-    dateExexcuted: Date
-    voteType: string
-    options: Array<string>
-    voteUrl: string
-    forumUrl: string
-    status: string
-}
 
 app.use(helmet()) // adding Helmet to enhance your Rest API's security
 app.use(bodyParser.json()) // using bodyParser to parse JSON bodies into JS object
@@ -57,10 +27,8 @@ app.get("/", (req, res) => {
 })
 
 app.get("/api/proposals/fetch/makerdao", async (req, res) => {
-    const scrape = async (type: ProposalType) => {
-        const slug = type === ProposalType.poll ? "polling" : "executive"
+    const scrape = async (slug) => {
         console.log(`/api/proposals/fetch/makerdao:  Scraping ${slug} data`)
-
         console.log(`/api/proposals/fetch/makerdao:  Launching browser`)
         const browser = await puppeteer.launch({
             args: [
@@ -90,13 +58,13 @@ app.get("/api/proposals/fetch/makerdao", async (req, res) => {
         const entries = JSON.parse(text).props.pageProps[slug === "polling" ? "polls" : "proposals"]
         const data =
             slug === "polling"
-                ? entries.map((p: any) => {
+                ? entries.map((p) => {
                       return {
                           title: p.title,
                           type: "Poll",
                           voteType: p.parameters.inputFormat.type
                               .split("-")
-                              .map((word: string[]) => word[0].toUpperCase() + String(word).substring(1))
+                              .map((word) => word[0].toUpperCase() + String(word).substring(1))
                               .join(" "),
                           options: Object.values(p.options),
                           dateAdded: p.startDate,
@@ -106,7 +74,7 @@ app.get("/api/proposals/fetch/makerdao", async (req, res) => {
                           status: Status.Unassigned,
                       }
                   })
-                : entries.map((p: any) => {
+                : entries.map((p) => {
                       return {
                           title: p.title,
                           type: "Executive Proposal",
@@ -127,9 +95,9 @@ app.get("/api/proposals/fetch/makerdao", async (req, res) => {
         return data
     }
 
-    const polls = await scrape(ProposalType.poll)
+    const polls = await scrape("polling")
     console.log(`/api/proposals/fetch/makerdao:  Retrieved polls`)
-    const proposals = await scrape(ProposalType.executive)
+    const proposals = await scrape("executive")
     console.log(`/api/proposals/fetch/makerdao:  Retrieved executive proposals`)
     const data = polls.concat(proposals)
     console.log(`/api/proposals/fetch/makerdao:  Returning voting data`)
@@ -139,7 +107,7 @@ app.get("/api/proposals/fetch/makerdao", async (req, res) => {
 app.post("/api/proposals/save", async (req, res) => {
     const data = req.body
 
-    const createProposal = async (data: Prisma.ProposalCreateInput): Promise<Proposal> => {
+    const createProposal = async (data) => {
         const newProposal = await prisma.proposal.create({
             data: {
                 title: data.title,
@@ -166,7 +134,7 @@ app.post("/api/proposals/save", async (req, res) => {
         const newProposal = await createProposal(data)
         res.status(200).json(newProposal)
     } catch (e) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e) {
             if (e.code === "P2002") {
                 res.status(404).send({
                     error: "There is a unique constraint violation, a new proposal with this title already exists",
@@ -185,7 +153,7 @@ app.post("/api/proposals/save", async (req, res) => {
 })
 
 app.get("/api/proposals/fetch-all", async (req, res) => {
-    const proposalResponse: any = await fetch(`${server}/api/proposals/fetch/makerdao`, {
+    const proposalResponse = await fetch(`${server}/api/proposals/fetch/makerdao`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
@@ -193,7 +161,7 @@ app.get("/api/proposals/fetch-all", async (req, res) => {
         },
     })
 
-    const fetchedProposals: Promise<Array<IProposalInfo>> = await proposalResponse.json()
+    const fetchedProposals = await proposalResponse.json()
 
     console.log(`/api/proposals/fetch-all:  Fetched makerdao proposals`)
 
@@ -215,7 +183,7 @@ app.get("/api/proposals/fetch-all", async (req, res) => {
             status: selectedProposal.status,
         }
 
-        const response: any = await fetch(`${server}/api/proposals/save`, {
+        const response = await fetch(`${server}/api/proposals/save`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

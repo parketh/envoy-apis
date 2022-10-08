@@ -5,7 +5,6 @@ const helmet = require("helmet")
 const morgan = require("morgan")
 const fetch = require("cross-fetch")
 const puppeteer = require("puppeteer-core")
-const chromium = require("chrome-aws-lambda")
 const { PrismaClient } = require("@prisma/client")
 const Telegram = require("telegram-notify")
 require("dotenv").config()
@@ -22,23 +21,15 @@ app.use(cors()) // enabling CORS for all requests
 app.use(morgan("combined")) // adding morgan to log HTTP requests
 
 app.get("/", (req, res) => {
-    res.send("Nothing on this page.")
+    res.send("Server is running.")
 })
 
 app.get("/api/proposals/fetch/makerdao", async (req, res) => {
     const scrape = async (slug) => {
         console.log(`/api/proposals/fetch/makerdao:  Scraping ${slug} data`)
         console.log(`/api/proposals/fetch/makerdao:  Launching browser`)
-        const browser = await chromium.puppeteer.launch({
-            args: [
-                ...chromium.args,
-                "--hide-scrollbars",
-                "--disable-web-security",
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
-            ],
-            defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath,
+        const browser = await puppeteer.launch({
+            args: ["--hide-scrollbars", "--disable-web-security", "--no-sandbox", "--disable-setuid-sandbox"],
             headless: true,
             ignoreHTTPSErrors: true,
         })

@@ -63,7 +63,13 @@ app.get("/api/proposals/fetch/makerdao", async (req, res) => {
 
         console.log(`/api/proposals/fetch/makerdao:  Launching browser`)
         const browser = await puppeteer.launch({
-            args: [...chromium.args, "--hide-scrollbars", "--disable-web-security"],
+            args: [
+                ...chromium.args,
+                "--hide-scrollbars",
+                "--disable-web-security",
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+            ],
             defaultViewport: chromium.defaultViewport,
             executablePath: await chromium.executablePath,
             headless: true,

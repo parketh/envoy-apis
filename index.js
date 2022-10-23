@@ -151,7 +151,6 @@ app.get("/api/proposals/fetch-all", async (req, res) => {
         },
     })
     const fetchedProposals = proposalsRequest.data
-    const newProposals = []
 
     console.log(`/api/proposals/fetch-all:  Fetched makerdao proposals`)
 
@@ -173,8 +172,13 @@ app.get("/api/proposals/fetch-all", async (req, res) => {
                     },
                 })
                 if (response.status === 200) {
-                    const message = `${selectedProposal.title}\n\nType: ${selectedProposal.type}\nVote Type: ${selectedProposal.voteType}\nOptions: ${selectedProposal.options}\nDate Added: ${selectedProposal.dateAdded}\nExpiry date: ${selectedProposal.dateExpiry}\nVote URL: ${selectedProposal.voteUrl}\nForum URL: ${selectedProposal.forumUrl}`
-                    await notify.send(message)
+                    if (selectedProposal.type == "Poll") {
+                        const message = `${selectedProposal.title}\n\nType: ${selectedProposal.type}\nVote Type: ${selectedProposal.voteType}\nOptions: ${selectedProposal.options}\nDate Added: ${selectedProposal.dateAdded}\nExpiry date: ${selectedProposal.dateExpiry}\nVote URL: ${selectedProposal.voteUrl}\nForum URL: ${selectedProposal.forumUrl}`
+                        await notify.send(message)
+                    } else {
+                        const message = `${selectedProposal.title}\n\nType: ${selectedProposal.type}\nDate Added: ${selectedProposal.dateAdded}\nExpiry date: ${selectedProposal.dateExpiry}\nVote URL: ${selectedProposal.voteUrl}`
+                        await notify.send(message)
+                    }
                 }
                 console.log(`/api/proposals/fetch-all:  Saved new proposal`)
             } catch (err) {
@@ -182,7 +186,43 @@ app.get("/api/proposals/fetch-all", async (req, res) => {
             }
         }
     }
+
+    try {
+        await axios.get(`${server}/api/proposals/expiring`, {
+            headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+            },
+        })
+    } catch (err) {
+        console.error(err)
+    }
+
     res.status(200).json({ message: "done" })
+})
+
+app.get("/api/proposals/expiring", async (req, res) => {
+    const today = new Date()
+    const tomorrow = new Date(today.getTime() + 86400000 * 1.5) // next 1.5 days
+
+    const expiringProposals = await prisma.proposal.findMany({
+        where: {
+            dateExpiry: {
+                gte: today,
+                lte: tomorrow,
+            },
+        },
+    })
+
+    if (expiringProposals) {
+        const message = `❗❗ Expiring Soon\n\n${expiringProposals
+            .map((p) => `${p.title}\nExpiry date: ${p.dateExpiry}\nVote URL: ${p.voteUrl}\n\n`)
+            .join("")}`
+        await notify.send(message)
+        res.status(200).json(expiringProposals)
+    }
+
+    res.status(200).json({ message: "No new expiring proposals" })
 })
 
 // starting the server

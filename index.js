@@ -290,16 +290,16 @@ app.get("/api/proposals/fetch-all", async (req, res) => {
         }
     }
 
-    // try {
-    //     await axios.get(`${server}/api/proposals/expiring`, {
-    //         headers: {
-    //             "Content-Type": "application/json",
-    //             "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-    //         },
-    //     })
-    // } catch (err) {
-    //     console.error(err)
-    // }
+    try {
+        await axios.get(`${server}/api/proposals/expiring`, {
+            headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+            },
+        })
+    } catch (err) {
+        console.error(err)
+    }
 
     res.status(200).json({ message: "done" })
 })
@@ -318,10 +318,16 @@ app.get("/api/proposals/expiring", async (req, res) => {
     })
 
     if (expiringProposals) {
-        const message = `❗❗ Expiring Soon\n\n${expiringProposals
+        const MakerMessage = `❗❗ Expiring Soon\n\n${expiringProposals
+            .filter((p) => p.protocolId === 1)
             .map((p) => `${p.title}\nExpiry date: ${p.dateExpiry}\nVote URL: ${p.voteUrl}\n\n`)
             .join("")}`
-        await notify.send(message)
+        await notifyMaker.send(MakerMessage)
+        const AaveMessage = `❗❗ Expiring Soon\n\n${expiringProposals
+            .filter((p) => p.protocolId === 2)
+            .map((p) => `${p.title}\nExpiry date: ${p.dateExpiry}\nVote URL: ${p.voteUrl}\n\n`)
+            .join("")}`
+        await notifyAave.send(AaveMessage)
         res.status(200).json(expiringProposals)
     }
 

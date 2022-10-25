@@ -10,6 +10,7 @@ const { PrismaClient } = require("@prisma/client")
 const { proposal } = require("@prisma/client")
 const Telegram = require("telegram-notify")
 require("dotenv").config()
+const cron = require("./cron")
 
 const server = process.env.NODE_ENV === "development" ? "http://localhost:3001" : "https://envoy-apis.herokuapp.com"
 
@@ -22,6 +23,9 @@ app.use(helmet()) // adding Helmet to enhance your Rest API's security
 app.use(bodyParser.json()) // using bodyParser to parse JSON bodies into JS object
 app.use(cors()) // enabling CORS for all requests
 app.use(morgan("combined")) // adding morgan to log HTTP requests
+
+cron.initCheckNewProposalsJob()
+cron.initCheckExpiringProposalsJob()
 
 app.get("/", (req, res) => {
     res.send("Nothing on this page.")
@@ -288,17 +292,6 @@ app.get("/api/proposals/fetch-all", async (req, res) => {
                 console.error(err)
             }
         }
-    }
-
-    try {
-        await axios.get(`${server}/api/proposals/expiring`, {
-            headers: {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-            },
-        })
-    } catch (err) {
-        console.error(err)
     }
 
     res.status(200).json({ message: "done" })

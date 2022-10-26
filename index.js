@@ -311,16 +311,21 @@ app.get("/api/proposals/expiring", async (req, res) => {
     })
 
     if (expiringProposals) {
-        const MakerMessage = `❗❗ Expiring Soon\n\n${expiringProposals
-            .filter((p) => p.protocolId === 1)
-            .map((p) => `${p.title}\nExpiry date: ${p.dateExpiry}\nVote URL: ${p.voteUrl}\n\n`)
-            .join("")}`
-        await notifyMaker.send(MakerMessage)
-        const AaveMessage = `❗❗ Expiring Soon\n\n${expiringProposals
-            .filter((p) => p.protocolId === 2)
-            .map((p) => `${p.title}\nExpiry date: ${p.dateExpiry}\nVote URL: ${p.voteUrl}\n\n`)
-            .join("")}`
-        await notifyAave.send(AaveMessage)
+        const MakerExpiringProposals = expiringProposals.filter((p) => p.protocolId === 1)
+        if (MakerExpiringProposals) {
+            const MakerMessage = `❗❗ Expiring Soon\n\n${MakerExpiringProposals.map(
+                (p) => `${p.title}\nExpiry date: ${p.dateExpiry}\nVote URL: ${p.voteUrl}\n\n`
+            ).join("")}`
+            await notifyMaker.send(MakerMessage)
+        }
+
+        const AaveExpiringProposals = expiringProposals.filter((p) => p.protocolId === 2)
+        if (AaveExpiringProposals) {
+            const AaveMessage = `❗❗ Expiring Soon\n\n${AaveExpiringProposals.map(
+                (p) => `${p.title}\nExpiry date: ${p.dateExpiry}\nVote URL: ${p.voteUrl}\n\n`
+            ).join("")}`
+            await notifyAave.send(AaveMessage)
+        }
         res.status(200).json(expiringProposals)
     }
 

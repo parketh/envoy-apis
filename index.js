@@ -10,7 +10,6 @@ const { PrismaClient } = require("@prisma/client")
 const { proposal } = require("@prisma/client")
 const Telegram = require("telegram-notify")
 require("dotenv").config()
-const cron = require("./cron")
 
 const server = process.env.NODE_ENV === "development" ? "http://localhost:3001" : "https://envoy-apis.herokuapp.com"
 
@@ -23,9 +22,6 @@ app.use(helmet()) // adding Helmet to enhance your Rest API's security
 app.use(bodyParser.json()) // using bodyParser to parse JSON bodies into JS object
 app.use(cors()) // enabling CORS for all requests
 app.use(morgan("combined")) // adding morgan to log HTTP requests
-
-cron.initCheckNewProposalsJob()
-cron.initCheckExpiringProposalsJob()
 
 app.get("/", (req, res) => {
     res.send("Nothing on this page.")

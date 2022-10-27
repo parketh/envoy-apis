@@ -72,7 +72,7 @@ app.get("/api/proposals/fetch/makerdao", async (req, res) => {
                 type: "Executive Proposal",
                 voteType: "Executive Proposal",
                 options: [""],
-                dateAdded: p.spellData.datePassed,
+                dateAdded: p.spellData.datePassed ? p.spellData.datePassed : new Date(Date.parse(p.date)),
                 dateExpiry: p.spellData.expiration,
                 dateExecuted: p.spellData.dateExecuted,
                 voteUrl: `https://vote.makerdao.com/executive/${"template-executive-vote-"}${String(p.title)

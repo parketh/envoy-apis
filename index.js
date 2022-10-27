@@ -308,7 +308,7 @@ app.get("/api/proposals/expiring", async (req, res) => {
 
     if (expiringProposals) {
         const MakerExpiringProposals = expiringProposals.filter((p) => p.protocolId === 1)
-        if (MakerExpiringProposals) {
+        if (MakerExpiringProposals.length !== 0) {
             const MakerMessage = `❗❗ Expiring Soon\n\n${MakerExpiringProposals.map(
                 (p) => `${p.title}\nExpiry date: ${p.dateExpiry}\nVote URL: ${p.voteUrl}\n\n`
             ).join("")}`
@@ -316,16 +316,16 @@ app.get("/api/proposals/expiring", async (req, res) => {
         }
 
         const AaveExpiringProposals = expiringProposals.filter((p) => p.protocolId === 2)
-        if (AaveExpiringProposals) {
+        if (AaveExpiringProposals.length !== 0) {
             const AaveMessage = `❗❗ Expiring Soon\n\n${AaveExpiringProposals.map(
                 (p) => `${p.title}\nExpiry date: ${p.dateExpiry}\nVote URL: ${p.voteUrl}\n\n`
             ).join("")}`
             await notifyAave.send(AaveMessage)
         }
         res.status(200).json(expiringProposals)
+    } else {
+        res.status(200).json({ message: "No new expiring proposals" })
     }
-
-    res.status(200).json({ message: "No new expiring proposals" })
 })
 
 // starting the server

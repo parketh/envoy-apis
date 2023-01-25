@@ -316,10 +316,10 @@ app.get("/api/test/proposals/fetch-all", async (req: Request, res: Response) => 
         for (const selectedProposal of newMakerProposals) {
             if (selectedProposal.type == "Poll") {
                 const message = `Protocol: Maker\n\n${selectedProposal.title}\n\nType: ${selectedProposal.type}\nVote Type: ${selectedProposal.voteType}\nOptions: ${selectedProposal.options}\nDate Added: ${selectedProposal.dateAdded}\nExpiry date: ${selectedProposal.dateExpiry}\nVote URL: ${selectedProposal.voteUrl}\nForum URL: ${selectedProposal.forumUrl}`
-                // await notifyTest.send(message)
+                await notifyTest.send(message)
             } else {
                 const message = `Protocol: Maker\n\n${selectedProposal.title}\n\nType: ${selectedProposal.type}\nDate Added: ${selectedProposal.dateAdded}\nExpiry date: ${selectedProposal.dateExpiry}\nVote URL: ${selectedProposal.voteUrl}`
-                // await notifyTest.send(message)
+                await notifyTest.send(message)
             }
         }
 
@@ -335,7 +335,7 @@ app.get("/api/test/proposals/fetch-all", async (req: Request, res: Response) => 
             const message = `❗❗ Expiring Soon(Maker)\n\n${expiringMakerProposals
                 .map((p) => `${p.title}\nExpiry date: ${p.dateExpiry}\nVote URL: ${p.voteUrl}\n\n`)
                 .join("")}`
-            // await notifyTest.send(message)
+            await notifyTest.send(message)
         }
 
         console.log(`/api/test/proposals/fetch-all:  Fetching Aave proposals`)

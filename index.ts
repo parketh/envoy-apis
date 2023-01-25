@@ -271,7 +271,7 @@ app.get("/api/proposals/fetch-all", async (req: Request, res: Response) => {
             (p) => p.dateAdded > yesterday.toISOString() && p.dateAdded < today.toISOString()
         )
         for (const selectedProposal of newAaveProposals) {
-            const message = `${selectedProposal.title}\n\nType: ${selectedProposal.type}\nDate Added: ${selectedProposal.dateAdded}\nExpiry date: ${selectedProposal.dateExpiry}\nVote URL: ${selectedProposal.voteUrl}\nForum URL: ${selectedProposal.forumUrl}`
+            const message = `${selectedProposal.title}\n\nType: ${selectedProposal.type}\nDate Added: ${selectedProposal.dateAdded}\nExpiry date: ${selectedProposal.dateExpiry}\nVote URL: ${selectedProposal.voteUrl}`
             await notifyAave.send(message)
         }
 
@@ -373,7 +373,7 @@ app.get("/api/test/proposals/fetch-all", async (req: Request, res: Response) => 
             (p) => p.dateAdded > yesterday.toISOString() && p.dateAdded < today.toISOString()
         )
         for (const selectedProposal of newAaveProposals) {
-            const message = `Protocol: Aave\n\n${selectedProposal.title}\n\nType: ${selectedProposal.type}\nDate Added: ${selectedProposal.dateAdded}\nExpiry date: ${selectedProposal.dateExpiry}\nVote URL: ${selectedProposal.voteUrl}\nForum URL: ${selectedProposal.forumUrl}`
+            const message = `Protocol: Aave\n\n${selectedProposal.title}\n\nType: ${selectedProposal.type}\nDate Added: ${selectedProposal.dateAdded}\nExpiry date: ${selectedProposal.dateExpiry}\nVote URL: ${selectedProposal.voteUrl}`
             await notifyTest.send(message)
         }
 

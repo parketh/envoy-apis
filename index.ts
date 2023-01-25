@@ -209,7 +209,7 @@ app.get("/api/proposals/fetch/aave", async (req, res) => {
 //     }
 // })
 
-app.get("/api/proposals/fetch-all", async (req, res) => {
+app.get("/api/proposals/fetch-all", async (req: Request, res: Response) => {
     try {
         console.log(`/api/proposals/fetch-all:  Fetching MakerDAO proposals`)
 
@@ -225,7 +225,10 @@ app.get("/api/proposals/fetch-all", async (req, res) => {
 
         const today = new Date()
         const yesterday = new Date(today.getTime() - 86400000 * 1)
-        const newMakerProposals = MakerFetchedProposals.filter((p) => p.dateAdded > yesterday.toISOString())
+        const newMakerProposals = MakerFetchedProposals.filter(
+            (p) => p.dateAdded > yesterday.toISOString() && p.dateAdded < today.toISOString()
+        )
+        console.log("newMakerProposals", newMakerProposals)
 
         for (const selectedProposal of newMakerProposals) {
             if (selectedProposal.type == "Poll") {
@@ -240,7 +243,10 @@ app.get("/api/proposals/fetch-all", async (req, res) => {
         console.log(`/api/proposals/fetch-all:  Pushing expiring MakerDAO proposals to Telegram`)
 
         const tomorrow = new Date(today.getTime() + 86400000 * 1.5)
-        const expiringMakerProposals = MakerFetchedProposals.filter((p) => p.dateExpiry < tomorrow.toISOString())
+        const expiringMakerProposals = MakerFetchedProposals.filter(
+            (p) => p.dateExpiry > today.toISOString() && p.dateExpiry < tomorrow.toISOString()
+        )
+        console.log("expiringMakerProposals", expiringMakerProposals)
 
         if (expiringMakerProposals.length !== 0) {
             const message = `❗❗ Expiring Soon\n\n${expiringMakerProposals
@@ -261,7 +267,9 @@ app.get("/api/proposals/fetch-all", async (req, res) => {
 
         console.log(`/api/proposals/fetch-all:  Pushing new Aave proposals to Telegram`)
 
-        const newAaveProposals = AaveFetchedProposals.filter((p) => p.dateAdded > yesterday.toISOString())
+        const newAaveProposals = AaveFetchedProposals.filter(
+            (p) => p.dateAdded > yesterday.toISOString() && p.dateAdded < today.toISOString()
+        )
         for (const selectedProposal of newAaveProposals) {
             const message = `${selectedProposal.title}\n\nType: ${selectedProposal.type}\nDate Added: ${selectedProposal.dateAdded}\nExpiry date: ${selectedProposal.dateExpiry}\nVote URL: ${selectedProposal.voteUrl}\nForum URL: ${selectedProposal.forumUrl}`
             await notifyAave.send(message)
@@ -269,7 +277,9 @@ app.get("/api/proposals/fetch-all", async (req, res) => {
 
         console.log(`/api/proposals/fetch-all:  Pushing expiring Aave proposals to Telegram`)
 
-        const expiringAaveProposals = AaveFetchedProposals.filter((p) => p.dateExpiry < tomorrow.toISOString())
+        const expiringAaveProposals = AaveFetchedProposals.filter(
+            (p) => p.dateExpiry > today.toISOString() && p.dateExpiry < tomorrow.toISOString()
+        )
 
         if (expiringAaveProposals.length !== 0) {
             const message = `❗❗ Expiring Soon\n\n${expiringAaveProposals
@@ -278,7 +288,16 @@ app.get("/api/proposals/fetch-all", async (req, res) => {
             await notifyAave.send(message)
         }
 
-        res.status(200).json({ message: "done" })
+        res.status(200).json({
+            new: {
+                Maker: newMakerProposals,
+                Aave: newAaveProposals,
+            },
+            expiring: {
+                Maker: expiringMakerProposals,
+                Aave: expiringAaveProposals,
+            },
+        })
     } catch (error) {
         let message = "Unknown error"
         if (error instanceof Error) {
@@ -332,7 +351,7 @@ app.get("/api/test/proposals/fetch-all", async (req: Request, res: Response) => 
         console.log("expiringMakerProposals", expiringMakerProposals)
 
         if (expiringMakerProposals.length !== 0) {
-            const message = `❗❗ Expiring Soon(Maker)\n\n${expiringMakerProposals
+            const message = `❗❗ Expiring Soon (Maker)\n\n${expiringMakerProposals
                 .map((p) => `${p.title}\nExpiry date: ${p.dateExpiry}\nVote URL: ${p.voteUrl}\n\n`)
                 .join("")}`
             await notifyTest.send(message)

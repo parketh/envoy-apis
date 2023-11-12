@@ -166,11 +166,6 @@ app.get("/api/proposals/fetch/arbitrum", async (req, res) => {
     proposals(chainId: $chainId, pagination: $pagination, sort: $sort, governors: $governors) {
       id
       title
-      eta
-      governor {
-        name
-        id
-      }
       voteStats {
         support
         weight
@@ -183,8 +178,10 @@ app.get("/api/proposals/fetch/arbitrum", async (req, res) => {
       end {
         timestamp
       }
-      block {
-        timestamp
+      createdTransaction {
+        block {
+          timestamp
+        }
       }
     }
   }`
@@ -209,6 +206,7 @@ app.get("/api/proposals/fetch/arbitrum", async (req, res) => {
       }),
     })
     const result = await response.json()
+    console.log({ result })
     if (result?.errors) {
       console.error("error when fetching")
       return null
@@ -223,7 +221,7 @@ app.get("/api/proposals/fetch/arbitrum", async (req, res) => {
       type: "AIP",
       voteType: "AIP",
       options: p.voteStats.map((v) => v.support),
-      dateAdded: p.block.timestamp,
+      dateAdded: p.createdTransaction.block.timestamp,
       dateExpiry: p.end.timestamp,
       voteUrl: `https://www.tally.xyz/gov/arbitrum/proposal/${p.id}`,
     }))
@@ -231,6 +229,7 @@ app.get("/api/proposals/fetch/arbitrum", async (req, res) => {
 
   try {
     const proposals = await fetchProposals()
+    console.log({ proposals })
     const processedProposals = processProposals(proposals)
     res.status(200).json(processedProposals)
   } catch (error) {

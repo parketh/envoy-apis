@@ -121,8 +121,10 @@ export type ArbitrumRawProposal = {
   end: {
     timestamp: string
   }
-  block: {
-    timestamp: string
+  createdTransaction: {
+    block: {
+      timestamp: string
+    }
   }
 }
 

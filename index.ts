@@ -121,6 +121,7 @@ app.get("/api/proposals/fetch/aave", async (req, res) => {
 
     const results = $("#__NEXT_DATA__").text()
     let json = JSON.parse(Buffer.from(results).toString("utf8"))
+    console.log({ json: json.props.pageProps })
     return json.props.pageProps.proposals
   }
 
@@ -151,7 +152,7 @@ app.get("/api/proposals/fetch/aave", async (req, res) => {
         error.message
       }`
       message = errorMessage
-      await notifyTest.send(errorMessage)
+      // await notifyTest.send(errorMessage)
     }
     res.status(400).json({ error: message })
   }
@@ -246,6 +247,17 @@ app.get("/api/proposals/fetch/arbitrum", async (req, res) => {
 })
 
 app.get("/api/proposals/fetch-all", async (req: Request, res: Response) => {
+  let newMakerProposals: Proposal[] = []
+  let expiringMakerProposals: Proposal[] = []
+  let newAaveProposals: Proposal[] = []
+  let expiringAaveProposals: Proposal[] = []
+  let newArbitrumProposals: Proposal[] = []
+  let expiringArbitrumProposals: Proposal[] = []
+
+  const today = new Date()
+  const yesterday = new Date(today.getTime() - 86400000 * 1)
+  const tomorrow = new Date(today.getTime() + 86400000 * 1.5)
+
   try {
     console.log(`/api/proposals/fetch-all:  Fetching MakerDAO proposals`)
 
@@ -259,9 +271,7 @@ app.get("/api/proposals/fetch-all", async (req: Request, res: Response) => {
 
     console.log(`/api/proposals/fetch-all:  Pushing new MakerDAO proposals to Telegram`)
 
-    const today = new Date()
-    const yesterday = new Date(today.getTime() - 86400000 * 1)
-    const newMakerProposals = MakerFetchedProposals.filter(
+    newMakerProposals = MakerFetchedProposals.filter(
       (p) => p.dateAdded > yesterday.toISOString() && p.dateAdded < today.toISOString()
     )
     console.log("newMakerProposals", newMakerProposals)
@@ -278,8 +288,7 @@ app.get("/api/proposals/fetch-all", async (req: Request, res: Response) => {
 
     console.log(`/api/proposals/fetch-all:  Pushing expiring MakerDAO proposals to Telegram`)
 
-    const tomorrow = new Date(today.getTime() + 86400000 * 1.5)
-    const expiringMakerProposals = MakerFetchedProposals.filter(
+    expiringMakerProposals = MakerFetchedProposals.filter(
       (p) => p.dateExpiry > today.toISOString() && p.dateExpiry < tomorrow.toISOString()
     )
     console.log("expiringMakerProposals", expiringMakerProposals)
@@ -290,7 +299,19 @@ app.get("/api/proposals/fetch-all", async (req: Request, res: Response) => {
         .join("")}`
       await notifyMaker.send(message)
     }
+  } catch (error) {
+    let message = "Unknown error"
+    if (error instanceof Error) {
+      const errorMessage = `⚠️ Error\nOrigin: /api/proposals/fetch-all\nDate: ${new Date().toISOString()}\nError: ${
+        error.message
+      }`
+      message = errorMessage
+      await notifyTest.send(errorMessage)
+    }
+    res.status(400).json({ error: message })
+  }
 
+  try {
     console.log(`/api/proposals/fetch-all:  Fetching Aave proposals`)
 
     const AaveProposalsRequest = await axios.get(`${server}/api/proposals/fetch/aave`, {
@@ -303,7 +324,7 @@ app.get("/api/proposals/fetch-all", async (req: Request, res: Response) => {
 
     console.log(`/api/proposals/fetch-all:  Pushing new Aave proposals to Telegram`)
 
-    const newAaveProposals = AaveFetchedProposals.filter(
+    newAaveProposals = AaveFetchedProposals.filter(
       (p) => p.dateAdded > yesterday.toISOString() && p.dateAdded < today.toISOString()
     )
     for (const selectedProposal of newAaveProposals) {
@@ -323,7 +344,19 @@ app.get("/api/proposals/fetch-all", async (req: Request, res: Response) => {
         .join("")}`
       await notifyAave.send(message)
     }
+  } catch (error) {
+    let message = "Unknown error"
+    if (error instanceof Error) {
+      const errorMessage = `⚠️ Error\nOrigin: /api/proposals/fetch-all\nDate: ${new Date().toISOString()}\nError: ${
+        error.message
+      }`
+      message = errorMessage
+      await notifyTest.send(errorMessage)
+    }
+    res.status(400).json({ error: message })
+  }
 
+  try {
     console.log(`/api/proposals/fetch-all:  Fetching Arbitrum proposals`)
 
     const ArbitrumProposalsRequest = await axios.get(`${server}/api/proposals/fetch/arbitrum`, {
@@ -336,7 +369,7 @@ app.get("/api/proposals/fetch-all", async (req: Request, res: Response) => {
 
     const ArbitrumFetchedProposals: Proposal[] = ArbitrumProposalsRequest.data
 
-    const newArbitrumProposals = ArbitrumFetchedProposals.filter(
+    newArbitrumProposals = ArbitrumFetchedProposals.filter(
       (p) => p.dateAdded > yesterday.toISOString() && p.dateAdded < today.toISOString()
     )
     if (newArbitrumProposals.length !== 0) {
@@ -349,7 +382,7 @@ app.get("/api/proposals/fetch-all", async (req: Request, res: Response) => {
 
     console.log(`/api/proposals/fetch-all:  Pushing expiring Aave proposals to Telegram`)
 
-    const expiringArbitrumProposals = ArbitrumFetchedProposals.filter(
+    expiringArbitrumProposals = ArbitrumFetchedProposals.filter(
       (p) => p.dateExpiry > today.toISOString() && p.dateExpiry < tomorrow.toISOString()
     )
 
@@ -359,19 +392,6 @@ app.get("/api/proposals/fetch-all", async (req: Request, res: Response) => {
         .join("")}`
       await notifyArbitrum.send(message)
     }
-
-    res.status(200).json({
-      new: {
-        Maker: newMakerProposals,
-        Aave: newAaveProposals,
-        Arbitrum: newArbitrumProposals,
-      },
-      expiring: {
-        Maker: expiringMakerProposals,
-        Aave: expiringAaveProposals,
-        Arbitrum: expiringArbitrumProposals,
-      },
-    })
   } catch (error) {
     let message = "Unknown error"
     if (error instanceof Error) {
@@ -383,6 +403,19 @@ app.get("/api/proposals/fetch-all", async (req: Request, res: Response) => {
     }
     res.status(400).json({ error: message })
   }
+
+  res.status(200).json({
+    new: {
+      Maker: newMakerProposals,
+      Aave: newAaveProposals,
+      Arbitrum: newArbitrumProposals,
+    },
+    expiring: {
+      Maker: expiringMakerProposals,
+      Aave: expiringAaveProposals,
+      Arbitrum: expiringArbitrumProposals,
+    },
+  })
 })
 
 app.get("/api/test/proposals/fetch-all", async (req: Request, res: Response) => {
